@@ -1,0 +1,2455 @@
+<?php
+//##############################################################
+//#	Title: Display Affiliate Class Definition
+//#	File Name: Display_User_affiliate.phpclass
+//#	Written By:  JWN	Date: 2/4/02
+//#	Written For:	democracyrules.org
+//#	Summary:
+//#		
+//##############################################################
+require("class/Display_User.phpclass");
+
+class Display_User_affiliate extends Display_User
+{
+	
+	function Header()
+	{
+?>
+		<!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN">
+		<html>
+		<head>
+		<title>Democracy Rules</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+		<meta name="Publisher" content="http://www.microteck.com/">
+		<meta name="Author" content="Rick Knight">
+		<meta name="Copyright" content="Copyright 2001 Democracy Rules">
+		<link rel="STYLESHEET" type="text/css" href="styles/dr.css">
+		</head>
+		<body bgcolor="#FFFFFF" topmargin=0 bottommargin="0" leftmargin=0 rightmargin="0" marginwidth="0" marginheight="0">
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td height="30" align="right" bgcolor="#FF0000">
+			<!-- top bar navigation -->
+			<table width="100%" border="0" cellspacing="0" cellpadding="0">
+			<tr>
+				<td width="207" align="left"><img src="images/header/slogan.jpg" width=207 height=20 border=0 alt=""></td>
+				<td align="right"><img src="images/header/nav_top_affiliate_1.jpg" usemap="#nav_top_affiliate_1" border=0 width=568 height=25><map name="nav_top_affiliate_1">
+				<area shape=rect coords="41,3,155,22" href="user_affiliates_registrants_archives.php" alt="Election Archive">
+				<area shape=rect coords="168,2,296,22" href="cgi-bin/ubb/affiliate/ultimatebb.cgi" alt="Candidate Forums">
+				<area shape=rect coords="304,2,448,23" href="user_affiliates_website_capabilities.php" alt="Website Cpabilities">
+				<area shape=rect coords="455,2,489,23" href="user_affiliates_faq.php" alt="FAQ">
+				<area shape=rect coords="497,2,554,23" href="user_affiliates_lost_id.php" alt="Lost ID">
+				</map></td>
+			</tr>
+			</table>
+			<!-- top bar navigation -->
+			</td>
+		</tr>
+		<tr>
+			<td height="100" align="right" valign="top" bgcolor="#FFFFFF" background="images/header/logo_affiliates.jpg">&nbsp;</td>
+		</tr>
+		<tr>
+			<td height="30" bgcolor="#000080">
+			<!-- bottom bar navigation -->
+			<table width="100%" border="0" cellspacing="0" cellpadding="0">
+			<tr>
+				<td align="right"><img src="images/header/nav_bottom_affiliate.jpg" usemap="#nav_bottom_affiliate" border=0 width=788 height=25><map name="nav_bottom_affiliate"><area shape=rect coords="23,2,57,22" href="index.html" alt="Democracy Rules USA"><area shape=rect coords="68,2,193,22" href="user_affiliates.php" alt="Affiliate Licensing"><area shape=rect coords="203,2,371,22" href="user_affiliates_responsibilities.php" alt="Affiliate Responsibilities"><area shape=rect coords="381,2,562,22" href="user_affiliates_employee_responsibilities.php" alt="Employee Responsililities"><area shape=rect coords="572,2,772,22" href="user_affiliates_employee_self_selection_process.php" alt="Employment Self-Nomination"></map></td>
+			</tr>
+			</table>
+			<!-- bottom bar navigation -->
+			</td>
+		</tr>
+		</table>
+		<br>
+<?php
+	}
+	
+	function voting_status($region_id, $position)
+	{
+		//determine status of voting for regions and position
+		// returns accepting, primary, intervote, final, closed
+		$db =& new AED();	
+		$table = "affiliate_elections";
+		$select_clause = "year(voting_start_date) as yr, month(voting_start_date) as mo, dayofmonth(voting_start_date) as da";
+		$where_clause = "position = '$position' AND region_id = $region_id";
+		$db->select_DB($table, $select_clause, $where_clause);
+		//DEBUGecho"$region_id, $position<br>";
+		if( $db->num_rows()==0) 
+		{ return "accepting"; }
+		else { extract ($db->fetch_assoc()); }
+		$voting_start_date_unix = mktime(0,0,1,$mo, $da, $yr);
+		$today_unix = date("U");        
+		$gap_days = ($today_unix - $voting_start_date_unix) / 86400;
+		
+		//DEBUGecho "$voting_start_date_unix/$today_unix--$mo, $da, $yr<br>";
+		//DEBUGecho "gap_days = $gap_days<br><br>";
+		if ($gap_days >= 0 AND $gap_days <10) {return "ready";}
+		if ($gap_days >= 10 AND $gap_days <17) {return "primary";}
+		if ($gap_days >= 17 AND $gap_days <27) {return "intervote";}
+		if ($gap_days >= 27 AND $gap_days <34) {return "final";}      
+		if ($gap_days >= 34 ) {return "closed";}          
+		
+		
+	
+			
+		
+		
+	}
+	
+	function applicants_available($position, $population)
+	{
+		$db =& new AED();	
+		$table = "affiliate_positions_available";
+		$select_clause = "applicants";
+		$where_clause = "position = '$position' AND population >= $population ORDER BY population asc";
+		$db->select_DB($table, $select_clause, $where_clause);
+		
+		if( $db->num_rows()>0)
+		{
+		extract ($db->fetch_assoc()  );
+		return $applicants;
+		} else
+		{
+			return "num_rows =". $db->num_rows() ;
+		}
+		
+		
+		
+		
+	}
+	
+	function positions_available($position, $population)
+	{
+		$db =& new AED();	
+		$table = "affiliate_positions_available";
+		$select_clause = "positions";
+		$where_clause = "position = '$position' AND population >= $population ORDER BY population asc";
+		$db->select_DB($table, $select_clause, $where_clause);
+		
+		if( $db->num_rows()>0)
+		{
+		extract ($db->fetch_assoc()  );
+		return $positions;
+		} else
+		{
+			return "num_rows =". $db->num_rows() ;
+		}
+		
+		
+		
+		
+	}
+	
+	function applicants_pending($position, $region_id)
+	{
+		
+		$db =& new AED();	
+		$table = "affiliate_applicants";
+		$select_clause = "count(*) as applicants";
+		$where_clause = "position = '$position' AND region_id = $region_id";
+		$db->select_DB($table, $select_clause, $where_clause);
+		
+		if( $db->num_rows()>0)
+		{
+		extract ($db->fetch_assoc()  );
+		return $applicants;
+		} else
+		{
+			return "num_fields = $db->num_rows() ";
+		}
+		
+	}
+	
+	function applicant_name($candidate_id)
+	{
+		
+		$db =& new AED();	
+		$table = "affiliate_applicants";
+		$select_clause = "first_name, last_name, display, penname";
+		$where_clause = "id = $candidate_id";
+		$db->select_DB($table, $select_clause, $where_clause);
+		extract ($db->fetch_assoc()  );
+		if ($display == "penname")
+		{ return $penname; }
+		else { return $first_name." ".$last_name; }
+	}
+	
+	function check_voted_before($candidate_id, $field_str)
+	{
+		//check if candidate has voted before; $field_str must be "voted_in_primary" or "voted_in_final"
+		$db =& new AED();	
+		$table = "affiliate_applicants";
+		
+		$select_clause = "$field_str = 'Y' ";
+		$where_clause = "id = $candidate_id";
+		return $db->select_one_DB($table, $select_clause, $where_clause);
+		
+		
+	}
+	
+		
+	function population_for_region($region_id)
+	{
+		$db =& new AED();	
+		$table = "affiliate_countries";
+		$select_clause = "population";
+		$where_clause = "id = $region_id";
+		$db->select_DB($table, $select_clause, $where_clause);
+		if( $db->num_rows()>0)
+		{
+		extract ($db->fetch_assoc()  );
+		return $population;
+		} else
+		{
+			return "num_fields = $db->num_rows() ";
+		}
+	}
+	
+	function status_for_region($region_id)
+	{
+		$db =& new AED();	
+		$table = "affiliate_countries";
+		$select_clause = "status";
+		$where_clause = "id = $region_id";
+		$db->select_DB($table, $select_clause, $where_clause);
+		if( $db->num_rows()>0)
+		{
+		extract ($db->fetch_assoc()  );
+		return $status;
+		} else
+		{
+			return "num_fields = $db->num_rows() ";
+		}
+	}
+	
+	function affiliate_content()
+	{
+?>
+	<!-- site content -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="50">&nbsp;</td>
+			<td width="90%" valign="top" class="bodytext">
+			<span class="subhead1">Democracy Rules Affiliate Licensing</span><br><br>
+			<!--  -->
+			Nearly 60% of the world's population, or about 3.6 billion people, reside in 120 countries governed by some form of electoral democracy.&nbsp; Democracy Rules offers to grant National Affiliate Licenses to groups of people wishing to represent each of these nations.&nbsp; Affiliates are expected to abide by our mission but will otherwise operate autonomously, serving members with presentations dedicated to the needs of their constituency.&nbsp; In addition, located within these democratic nations, there exist about 275 agglomerations - areas in which at least 1 million people reside.&nbsp; Democracy Rules offers to grant Agglomerate Affiliate Licenses to groups of people wishing to represent each of these areas as well.<br><br>
+			Democracy Rules has devised a self-selection process for employment applicants to elect one another to each affiliate position.&nbsp; This process employs the use of two elections to select qualified affiliate employees.&nbsp; Voting participation is limited to applicants registered for each position.&nbsp; Seriously interested and qualified applicants are encouraged to register and provide brief resumes for online display.&nbsp; Forums are provided for both viewers and applicants to discuss the qualifications of each candidate.&nbsp; A Primary Election for each available affiliate position is conducted after enough applicants have registered.&nbsp; This election will qualify the top half of the most popular candidates for our second election called the Affiliate Election, conducted 10 days after the conclusion of the Primary vote.&nbsp; The results of this final vote will conditionally certify elected applicants as affiliate employees.&nbsp; Conditions are removed only after each group has verified the resume, background and financial commitments of each employee-elect.&nbsp; Certified affiliates then travel to San Francisco for 3 days of training and award of their license and website.<br><br>
+			&quot;<a href="user_affiliates_responsibilities.php">Click here</a>&quot; to view Democracy Rules Affiliate Responsibilities
+			<!--  -->
+			<br>
+			</td>
+			<td width="50">&nbsp;</td>
+		</tr>
+		</table>
+		<br><br><br><br><br>
+<!-- site content -->
+<?php
+	}	
+	
+	
+	function	affiliate_responsibilities_content()
+	{
+?>		
+		<!-- site content -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="50">&nbsp;</td>
+			<td width="90%" valign="top" class="bodytext">
+			<span class="subhead1">Democracy Rules Affiliate Responsibilities</span><br><br>
+			<!--  -->
+			<span class="bodybold">Financial Responsibilities</span>
+			<ol>
+				<li>The Democracy Rules licensing fee is 2% of all affiliate administrative revenue.<br><br></li>
+				<li>Affiliates are required to possess sufficient funds to meet their start-up costs and the initial six-months of operation.&nbsp; Once elected, affiliates must submit their estimated budget and verification of funds.&nbsp; It is important the employees voted to the Board of Directors have fund-raising capabilities, either by direct contribution or access to individual donors.&nbsp; At a minimum, all applicants must have deposits equaling their own salaries for the initial startup period.<br><br></li>
+				<li>Affiliates are required to investigate the character and commitments of each employee-elect.<br><br></li>
+				<li>Affiliates are responsible for their personnel's training expenses.<br><br></li>
+				<li>Affiliates are responsible for website programming modifications.<br><br></li>
+				<li>Affiliates are responsible for establishing legal entities necessary for participation in their political arena(s).<br><br></li>
+				<li>Affiliates are responsible for submitting to an annual accounting audit or to an audit upon request by Democracy Rules Global.<br><br></li>
+			</ol>
+			<span class="bodybold">Operational Responsibilities</span>
+			<ol>
+				<li>Affiliate actions must conform to the mission and philosophy of Democracy Rules.&nbsp; A zero-tolerance policy exists for violations of this prime directive.<br><br></li>
+				<li>Affiliate offices must be located within their constituency.<br><br></li>
+				<li>Presentation cycles must be coordinated between national and agglomerate offices whenever possible.&nbsp; Generally, national affiliates will address national issues while agglomerate affiliates address local issues.<br><br></li>
+				<li>Affiliates must allow their members to decide important administrative issues whenever possible.<br><br></li>
+				<li>All affiliate website data must be translated or displayed in the English language.<br><br></li>
+				<li>Affiliates will accept the use of arbitration to resolve all disputes.&nbsp; National offices will adjudicate disputes arising from agglomerates located within their country.&nbsp; National affiliate arbitration decisions may be appealed to Democracy Rules Global.<br><br></li>
+				<li>Affiliate representatives must attend Democracy Rules annual convention.<br><br></li>
+			</ol>
+			&quot;<a href="user_affiliates_employee_responsibilities.php">Click here</a>&quot; to view Democracy Rules Employee Responsibilities.
+			<!--  -->
+			<br>
+			</td>
+			<td width="50">&nbsp;</td>
+		</tr>
+		</table>
+		<!-- site content -->
+		<br><br><br><br><br>		
+<?php		
+	}
+	
+	
+	
+	function affiliate_employee_responsibilities_content()
+	{
+?>	
+		<!-- site content -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="50">&nbsp;</td>
+			<td width="90%" valign="top" class="bodytext">
+			<span class="subhead1">Democracy Rules Employee Responsibilities</span><br><br>
+			<!--  -->
+			<span class="bodybold">Requirements</span>
+			<ol>
+				<li>Residency - Applicants must be a resident of the area in which they intend to serve for at least the past 5 years.<br><br></li>
+				<li>Democratic Ethic - - Employees must enthusiastically support the intent of their member's majority vote, even when it is not personally agreeable.<br><br></li>
+				<li>Affiliations - Persons with advocate, corporate, political or government affiliations are ineligible for employment.&nbsp; Affiliate personnel who develop such ties will be required to immediately resign their position.<br><br></li>
+				<li>Character &amp; Conduct - Persons who have violated the human rights of others are ineligible for employment.&nbsp; Democracy Rules personnel are expected to conduct themselves in a manner that positively represents our organization, including complete public objectivity on all social and political issues.<br><br></li>
+				<li>Commitment &amp; Compatibility - Applicants must be available to work full time, be good communicators and work productively with others in pressure situations.<br><br></li>
+			</ol>
+			<span class="bodybold">Job Descriptions &amp; Responsibilities</span><br><br>
+			<ul type="circle">
+				<li><span class="bodybold">Executive Director</span> - Supervises lobbying, advocate negotiations and dispute resolution.&nbsp; Is ultimately responsible for the site's operation, effectiveness and morale.&nbsp; Affiliate leaders must be responsible, creative, organized and able to motivate others.<br><br>Applicant Requirements:&nbsp; Previous experience directing an organization.<br><br><br><br></li>
+				<li><span class="bodybold">Assistant Director</span> - Supports the Executive Director.&nbsp;  These two positions share the same requirements and alternate responsibilities and job titles each year.<br><br>Applicant Requirements:&nbsp; Previous experience directing an organization.<br><br><br><br></li>
+				<li><span class="bodybold">Board of Directors</span> - Policy, ceremony, fund-raising and community outreach responsibilities.&nbsp; Board members will also appoint affiliate corporate officers, if necessary.&nbsp; Leadership positions are rotated annually.<br><br>Applicant Requirements:&nbsp; Fund raising or Board experience.<br><br><br><br></li>
+				<li><span class="bodybold">Administrator</span> - Office management, member communications, public relations and marketing responsibilities.&nbsp; Maintaining member, donor and trustee accounts.&nbsp; Leadership positions are rotated annually.<br><br>Applicant Requirements:&nbsp; Previous office experience and good communication, organization, bookkeeping, accounting or marketing skills.<br><br><br><br></li>
+				<li><span class="bodybold">Lobbyist</span> - Responsibilities include negotiating with trustees and evaluating the effectiveness of those agreements.<br><br>Applicant Requirements:&nbsp; Previous experience in lobbying, negotiations or sales.<br><br><br><br></li>
+				<li><span class="bodybold">Researcher</span> - Responsibilities include research of social issues and solutions proposed by advocate, legislative and non-government groups.&nbsp; Researchers also assist in trustee negotiations and with voter recommendations.&nbsp; Leadership positions are rotated annually.<br><br>Applicant Requirements:&nbsp; Academic, scientific or personal research experience.&nbsp; Good communication skills.<br><br><br><br></li>
+				<li><span class="bodybold">Technician</span> - Responsibilities include initial website programming set-up, correlation of voter recommendations and input of website data once online.&nbsp; Leadership positions are rotated annually.<br><br>Applicant Requirements:&nbsp; Previous website programming, maintenance or data input experience.<br><br><br><br></li>
+				<li><span class="bodybold">Investigator</span> - Perform manual fraud investigations, monitor and improve website security and suspend members' access when appropriate.&nbsp; Leadership positions are rotated annually.<br><br>Applicant Requirements:&nbsp; Computer security or conventional investigation experience.<br><br><br><br></li>
+			</ul>
+			&quot;<a href="user_affiliates_employee_self_selection_process.php">Click here</a>&quot; to apply for affiliate employment or to visit that affiliate's website.
+			<!--  -->
+			<br>
+			</td>
+			<td width="50">&nbsp;</td>
+		</tr>
+		</table>
+		<!-- site content -->
+		<br><br><br><br><br>
+		
+<?php		
+	}
+	
+	
+	function affiliate_employee_self_selection_process_content()
+	{
+		$table = "affiliate_countries";
+		$select_clause = "*";
+		$where_clause = "1";
+		$this->db->select_DB($table, $select_clause, $where_clause);
+		
+?>		
+		<!-- site content -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="50">&nbsp;</td>
+			<td width="90%" valign="top" class="bodytext">
+			<span class="subhead1">Affiliates</span><br><br>
+			<!--  -->
+			<span class="bodybold">Democracy Rules Employment Self-Nomination</span><br>
+			Democracy Rules allows qualified applicants to declare themselves a candidate for an affiliate employment position.&nbsp; Applications will be accepted until a predetermined number of applicants have registered.&nbsp; Once this occurs, further applications are declined and we allow 10 days for viewers to discuss candidate qualifications.&nbsp; Our forums are available for this purpose.&nbsp; After this time we host our Primary Election.&nbsp; Applicants may now vote for any candidate other than themselves.&nbsp; The Primary Election will qualify the top half of the candidate field for our final Affiliate Election.&nbsp; This election is conducted 10 days after the Primary vote, again allowing time for candidate discussion.&nbsp; Only the remaining candidates are allowed to vote in the Affiliate Election and again, they may not vote for themselves.&nbsp; Candidates have 7 days in which to cast their vote in either election.&nbsp; The most popular non-elected candidates will serve as alternates.<br><br>
+			Select a Democracy Rules national or agglomerate affiliate to declare yourself a candidate for employment.&nbsp; (Affiliate population bases are approximate estimates only.)&nbsp; Once these affiliates have been licensed, these links will take you directly to their website's home page.<br><br>
+			<!--  -->
+			<br>
+			<table border="1" cellspacing="0" cellpadding="0">
+			<tr>
+				<td>
+				<!-- /// -->
+				<table border="1" cellspacing="0" cellpadding="0">
+				<tr>
+					<td>
+					<!-- /// -->
+					<table border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+					<tr>
+						<td width="225" class="bodytext">Accepting Applications = <img src="images/global/bullet_green.gif" alt="" width="9" height="9" border="0"></td>
+						<td width="192" class="bodytext">Elections Pending = <img src="images/global/bullet_yellow.gif" alt="" width="9" height="9" border="0"></td>
+						<td width="174" class="bodytext">Positions Filled = <img src="images/global/bullet_orange.gif" alt="" width="9" height="9" border="0"></td>
+					</tr>
+					</table>
+					<!-- /// -->
+					</td>
+				</tr>
+				</table>
+				<!-- /// -->
+				</td>
+			</tr>
+			</table>
+			<br>
+			<!-- Header -->
+			<table border="1" cellspacing="0" cellpadding="0">
+			<tr>
+				<td>
+				<!-- /// -->
+				<table border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+				<tr>
+					<td width="150" class="bodybold">National Affiliates</td>
+					<td width="320" class="bodybold">Agglomerate Affiliates</td>
+					<td width="100" align="right" class="bodybold">Population</td>
+					<td width="20" align="right">&nbsp;</td>
+				</tr>
+				</table>
+				<!-- /// -->
+				</td>
+			</tr>
+			</table>
+			<!-- Header -->
+			<br>
+<?php
+	$previous_country = "";
+			while ($result_row =& $this->db->fetch_assoc()  )
+		
+		{	
+			extract($result_row);
+			if ($previous_country != $country) {$open_table = true;} else {$open_table =false;} 
+			if ($previous_country == "") {$first_table =true;} else {$first_table = false;}
+?>
+<?php
+	//echo "$previous_country != $country";
+		if ($open_table)
+		{
+			if (!$first_table)
+			{
+?>			
+				</table>
+				
+
+				<!-- close_table -->
+				</td>
+			</tr>
+			</table>
+			<br>
+<?php
+			}
+?>		
+			<table border="1" cellspacing="0" cellpadding="0">
+			<tr>
+				<td>
+				<!-- open_table -->
+
+				<table border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+<?php
+		}
+?>
+				<tr>
+					<td width="150" class="bodytext"><a href="user_affiliates_registration/?id=<?php print $id?>"><?php if ($region == "MAIN") {print $country;}?></a></td>
+					<td width="320" class="bodytext"><a href="user_affiliates_registration/?id=<?php print $id?>"><?php if ($region != "MAIN") {print $region;}?></a></td>
+					<td width="100" align="right" class="bodytext"><?php print number_format($population)?></td>
+					<td width="20" align="right">
+				<?php if ($status == "accepting") { ?>	
+					<img src="images/global/bullet_green.gif" alt="" width="9" height="9" border="0">
+				<?php } else if ($status == "pending") {?>
+					<img src="images/global/bullet_yellow.gif" alt="" width="9" height="9" border="0">
+				<?php } else if ($status == "filled") {?>
+					<img src="images/global/bullet_orange.gif" alt="" width="9" height="9" border="0">
+				<?php }?>
+					</td>
+				</tr>	
+<?php
+			
+		if ($open_table)
+		{				
+?>				
+				
+<?php
+		$previous_country = $country;
+		}
+?>
+<?php
+		
+		}			
+?>
+
+				</table>
+				
+
+				<!-- close_table -->
+				</td>
+			</tr>
+			</table>
+			<br>			
+		<br>
+			</td>
+			<td width="50">&nbsp;</td>
+		</tr>
+		</table>
+		<!-- site content -->
+		<br><br><br><br><br>
+				
+		
+<?php		
+	}
+	
+	
+	
+	function affiliate_registration_content()
+	{
+		$table = "affiliate_countries";
+		$select_clause = "*";
+		$where_clause = "id = $this->id";
+		$this->db->select_DB($table, $select_clause, $where_clause);
+			
+		extract($this->db->fetch_assoc());
+		
+?>		
+		<!-- site content -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="50">&nbsp;</td>
+			<td width="90%" valign="top" class="bodytext">
+			<span class="subhead1">Democracy Rules Employment Self-Nomination</span><br><br>
+			<!-- gray bar -->
+			<table width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+			<tr>
+				<td class="bodybold"><?php print $country?> &raquo;&raquo; <?php print $region?> &raquo;&raquo; Population <?php print number_format($population)?></td>
+			</tr>
+			</table>
+			<!-- gray bar -->
+			<br>
+			To view a list of registered applicants, click on the Candidates link following the position title.&nbsp; To apply for employment, click on the Applications Available link.<br><br>
+			<!--  -->
+			<table border="0" cellspacing="0" cellpadding="2">
+			<tr>
+				<td width="200">&nbsp;</td>
+				<td width="150" class="bodybold">Candidates</td>
+				<td width="160" class="bodybold">Applications Available</td>
+			</tr>
+			<tr>
+				<td class="bodytext">Executive &amp; Assistant Directors</td>
+				<td class="bodybold"><a href="user_affiliates_registrants.php?id=<?php print $this->id?>&position=execdir"><?php print $apps=$this->applicants_pending("execdir", $this->id)?></a></td>
+				<td class="bodybold"><a href="user_affiliates_registration_form.php?id=<?php print $this->id?>&position=execdir"><?php print $this->applicants_available("execdir", $population) - $apps?></a></td>
+			</tr>
+			<tr>
+				<td class="bodytext">Board of Directors</td>
+				<td class="bodybold"><a href="user_affiliates_registrants.php?id=<?php print $this->id?>&position=bd"><?php print  $apps=$this->applicants_pending("bd", $this->id)?></A></td>
+				<td class="bodybold"><A HREF="user_affiliates_registration_form.php?id=<?php print $this->id?>&position=bd"><?php print $this->applicants_available("bd", $population) - $apps?></A></td>
+			</tr>
+			<tr>
+				<td class="bodytext">Administrator</td>
+				<td class="bodybold"><a href="user_affiliates_registrants.php?id=<?php print $this->id?>&position=admin"><?php print  $apps=$this->applicants_pending("admin", $this->id)?></A></td>
+				<td class="bodybold"><A HREF="user_affiliates_registration_form.php?id=<?php print $this->id?>&position=admin"><?php print $this->applicants_available("admin", $population) - $apps?></A></td>
+			</tr>
+			<tr>
+				<td class="bodytext">Lobbyist</td>
+				<td class="bodybold"><a href="user_affiliates_registrants.php?id=<?php print $this->id?>&position=lob"><?php print  $apps=$this->applicants_pending("lob", $this->id)?></A></td>
+				<td class="bodybold"><A HREF="user_affiliates_registration_form.php?id=<?php print $this->id?>&position=lob"><?php print $this->applicants_available("lob", $population) - $apps?></A></td>
+			</tr>
+			<tr>
+				<td class="bodytext">Researcher</td>
+				<td class="bodybold"><a href="user_affiliates_registrants.php?id=<?php print $this->id?>&position=res"><?php print  $apps=$this->applicants_pending("res", $this->id)?></A></td>
+				<td class="bodybold"><A HREF="user_affiliates_registration_form.php?id=<?php print $this->id?>&position=res"><?php print $this->applicants_available("res", $population) - $apps?></A></td>
+			</tr>
+			<tr>
+				<td class="bodytext">Technician</td>
+				<td class="bodybold"><a href="user_affiliates_registrants.php?id=<?php print $this->id?>&position=tech"><?php print  $apps=$this->applicants_pending("tech", $this->id)?></A></td>
+				<td class="bodybold"><A HREF="user_affiliates_registration_form.php?id=<?php print $this->id?>&position=tech"><?php print $this->applicants_available("tech", $population) - $apps?></A></td>
+			</tr>
+			<tr>
+				<td class="bodytext">Investigator</td>
+				<td class="bodybold"><a href="user_affiliates_registrants.php?id=<?php print $this->id?>&position=invest"><?php print  $apps=$this->applicants_pending("invest", $this->id)?></A></td>
+				<td class="bodybold"><A HREF="user_affiliates_registration_form.php?id=<?php print $this->id?>&position=invest"><?php print $this->applicants_available("invest", $population) - $apps?></A></td>
+			</tr>
+			</table>
+			<!--  -->
+			<br>
+			<!--  -->
+			<span class="bodybold">Resum&eacute; Instructions</span><br>
+			Qualified, registered applicants interested in full-time employment are invited to submit their resume for public online display.&nbsp; Enter all information relevant to your candidacy including your experiences, motives, resources and goals.&nbsp; You may apply for only one affiliate employment position and if desired, you may use a pen name for privacy.&nbsp; Resumes may be submitted in English or the candidate's native language and all displayed information will eventually be verified.&nbsp; The number of available candidate and job openings are listed below.&nbsp; Employment elections will be conducted 10 days after the final application has been submitted.&nbsp; Candidates have 7 days to vote in each election.<br><br>
+			<span class="bodybold">Primary Election</span><br>
+			During these 7 days, applicants may vote for any candidate other than themselves.&nbsp; The Primary Election will qualify the top 50% of each applicant pool for the final Affiliate Election.&nbsp; The Affiliate Election will begin 10 days after the conclusion of the primary vote.&nbsp; Viewers may discuss the qualifications of all candidates in our forums before each election.<br><br>
+			<span class="bodybold">Affiliate Election</span><br>
+			During these 7 days, the remaining applicants may vote for any candidate other than themselves.&nbsp; Winning candidates are awarded that employment position once their statements and backgrounds have been verified.<br><br>
+			<span class="bodybold">Programming</span><br>
+			Democracy Rules allows a preset number of applicants to sign-up for each job position depending on the population base to be served by that affiliate.&nbsp; The Executive Director and Assistant Director share the same election and are awarded positions based on popularity.<br><br>  
+<?php if ($population < 350000)
+		{
+?>
+			
+			<!--  -->
+			<table border="1" cellspacing="0" cellpadding="0">
+			<tr>
+				<td>
+
+				<!-- /// -->
+				<table border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+				<tr>
+					<td height="50" colspan="4" align="center" class="bodybold">AFFILIATES WITH POPULATIONS LESS THAN 350,000 PEOPLE</td>
+				</tr>
+				<tr>
+					<td width="200">&nbsp;</td>
+					<td width="100" class="bodybold">Positions</td>
+					<td width="150" class="bodybold">Applicants</td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Executive &amp; Assistant Directors</td>
+					<td class="bodytext"><?php print $this->positions_available("execdir", 300000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("execdir", 300000)?></td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Board of Directors</td>
+					<td class="bodytext"><?php print $this->positions_available("bd", 300000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("bd", 300000)?></td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Administrator</td>
+					<td class="bodytext"><?php print $this->positions_available("admin", 300000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("admin", 300000)?></td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Lobbyist</td>
+					<td class="bodytext"><?php print $this->positions_available("lob", 300000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("lob", 300000)?></td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Researcher</td>
+					<td class="bodytext"><?php print $this->positions_available("res", 300000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("res", 300000)?></td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Technician</td>
+					<td class="bodytext"><?php print $this->positions_available("tech", 300000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("tech", 300000)?></td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Investigator</td>
+					<td class="bodytext"><?php print $this->positions_available("invest", 300000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("invest", 300000)?></td>
+					
+				</tr>
+				</table>
+				<!-- /// -->
+				</td>
+			</tr>
+			</table>
+			<!--  -->
+<?php
+		}
+?>
+<?php if ($population >= 350000 AND $population < 3000000)
+		{
+?>
+
+			<br>
+			<table border="1" cellspacing="0" cellpadding="0">
+			<tr>
+				<td>
+				<!-- /// -->
+				<table border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+				<tr>
+					<td height="50" colspan="4" align="center" class="bodybold">AFFILIATES WITH POPULATIONS <br>BETWEEN 350,000 AND 3 MILLION PEOPLE</td>
+				</tr>
+				<tr>
+					<td width="200">&nbsp;</td>
+					<td width="100" class="bodybold">Positions</td>
+					<td width="150" class="bodybold">Applicants</td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Executive &amp; Assistant Directors</td>
+					<td class="bodytext"><?php print $this->positions_available("execdir", 400000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("execdir", 400000)?></td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Board of Directors</td>
+					<td class="bodytext"><?php print $this->positions_available("bd", 400000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("bd", 400000)?></td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Administrator</td>
+					<td class="bodytext"><?php print $this->positions_available("admin", 400000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("admin", 400000)?></td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Lobbyist</td>
+					<td class="bodytext"><?php print $this->positions_available("lob", 400000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("lob", 400000)?></td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Researcher</td>
+					<td class="bodytext"><?php print $this->positions_available("res", 400000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("res", 400000)?></td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Technician</td>
+					<td class="bodytext"><?php print $this->positions_available("tech", 400000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("tech", 400000)?></td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Investigator</td>
+					<td class="bodytext"><?php print $this->positions_available("invest", 400000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("invest", 400000)?></td>
+					
+				</tr>
+				</table>
+				<!-- /// -->
+				</td>
+			</tr>
+			</table>
+<?php
+		}
+?>
+<?php if ($population >= 3000000 )
+		{
+?>
+			<!--  -->
+			<br>
+			<table border="1" cellspacing="0" cellpadding="0">
+			<tr>
+				<td>
+				<!-- /// -->
+				<table border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+				<tr>
+					<td height="50" colspan="4" align="center" class="bodybold">AFFILIATES WITH POPULATIONS MORE THAN 3 MILLION PEOPLE</td>
+				</tr>
+				<tr>
+					<td width="200">&nbsp;</td>
+					<td width="100" class="bodybold">Positions</td>
+					<td width="150" class="bodybold">Applicants</td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Executive &amp; Assistant Directors</td>
+					<td class="bodytext"><?php print $this->positions_available("execdir", 3100000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("execdir", 3100000)?></td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Board of Directors</td>
+					<td class="bodytext"><?php print $this->positions_available("bd", 3100000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("bd", 3100000)?></td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Administrator</td>
+					<td class="bodytext"><?php print $this->positions_available("admin", 3100000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("admin", 3100000)?></td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Lobbyist</td>
+					<td class="bodytext"><?php print $this->positions_available("lob", 3100000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("lob", 3100000)?></td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Researcher</td>
+					<td class="bodytext"><?php print $this->positions_available("res", 3100000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("res", 3100000)?></td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Technician</td>
+					<td class="bodytext"><?php print $this->positions_available("tech", 3100000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("tech", 3100000)?></td>
+					
+				</tr>
+				<tr>
+					<td class="bodytext">Investigator</td>
+					<td class="bodytext"><?php print $this->positions_available("invest", 3100000)?></td>
+					<td class="bodytext"><?php print $this->applicants_available("invest", 3100000)?></td>
+					
+				</tr>
+				</table>
+				<!-- /// -->
+				</td>
+			</tr>
+			</table>
+<?php
+		}
+?>
+
+			<!--  -->
+			<br>
+			</td>
+			<td width="50">&nbsp;</td>
+		</tr>
+		</table>
+		<!-- site content -->
+		<br><br><br><br><br>		
+<?php		
+	}
+	
+	
+	function affiliate_registration_form_content()
+	{
+		$table = "affiliate_countries";
+		$select_clause = "*";
+		$where_clause = "id = $this->id";
+		$this->db->select_DB($table, $select_clause, $where_clause);
+			
+		extract($this->db->fetch_assoc());
+?>		
+		<!-- site content -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="50">&nbsp;</td>
+			<td width="90%" valign="top" class="bodytext">
+			<span class="subhead1">Democracy Rules Employment Self-Nomination</span><br><br>
+			<!--  -->
+			The Democracy Rules affiliate employment registration process is completely separate from the member registration process of our USA website.&nbsp; All affiliate employment applicants must register here.&nbsp; Resumes may be submitted in English or the candidate's native language.<br><br>
+			<form action="user_affiliates_registration_form_ack.php" method ="GET" name = "regform">
+			<table border="0" cellspacing="0" cellpadding="2">
+			<input type = hidden name = region_id value = <?php print $id?>>
+			<input type = hidden name = position  value = <?php print $this->position?>>
+			<tr>
+				<td width="150" class="bodybold">Affiliate Web Site</td>
+				<td class="bodytext"><?php print $country?> &raquo;&raquo; <?php print $region?></td>
+			</tr>
+			<tr>
+				<td width="150" class="bodybold">Applying Position</td>
+<?php
+		switch ($this->position) {	
+			case "execdir":
+				$print_title = "Executive &amp; Assistant Director";	
+				break;
+			case "bd":
+				$print_title = "Board of Directors";	
+				break;
+			case "admin":
+				$print_title = "Administrator";	
+				break;
+			case "lob":
+				$print_title = "Lobbyist";	
+				break;
+			case "res":
+				$print_title = "Researcher";	
+				break;
+			case "tech":
+				$print_title = "Technician";	
+				break;
+			case "invest":
+				$print_title = "Investigator";	
+				break;	
+			}		
+?>	
+				<td class="bodytext"><?php print $print_title?></td>
+			</tr>
+			<tr>
+				<td width="150" height="20" class="bodybold"></td>
+			</tr>
+			<tr>
+				<td width="150" class="bodybold">Email Address</td>
+				<td><input type="text" name="email" size="50"></td>
+			</tr>
+			<tr>
+				<td width="150" class="bodybold">Alias/Pen-Name</td>
+				<td><input type="text" name="penname" size="50"></td>
+			</tr>
+			<tr>
+				<td width="150" class="bodybold">Display Status</td>
+				<td class="bodybold">Alias/Pen-Name<input type="radio" name="display" value="penname">&nbsp; First/Last Name <input type="radio" name="display" value="realname"></td>
+			</tr>
+			<tr>
+				<td height="5" colspan="2"></td>
+			</tr>
+			<tr>
+				<td class="bodybold">Name Prefix</td>
+				<td>
+				<select name="name_prefix">
+					<option value="0" selected>Select</option>
+					<option value="Mr.">Mr.</option>
+					<option value="Ms.">Ms.</option>
+					<option value="Mrs.">Mrs.</option>
+				</select>
+				</td>
+			</tr>
+			<tr>
+				<td class="bodybold">First Name</td>
+				<td><input type="text" name="first_name" size="50"></td>
+			</tr>
+			<tr>
+				<td class="bodybold">Last Name</td>
+				<td><input type="text" name="last_name" size="50"></td>
+			</tr>
+			<tr>
+				<td class="bodybold">Password</td>
+				<td><input type="password" name="password" size="50" maxlength = 15></td>
+			</tr>
+			<tr>
+				<td class="bodybold">Address</td>
+				<td><input type="text" name="address_1" size="50"></td>
+			</tr>
+			<tr>
+				<td class="bodybold">&nbsp;</td>
+				<td><input type="text" name="address_2" size="50"></td>
+			</tr>
+			<tr>
+				<td class="bodybold">City/Locale</td>
+				<td><input type="text" name="city" size="50"></td>
+			</tr>
+			<tr>
+				<td class="bodybold">State</td>
+				<td><input type="text" name="state" size="50"></td>
+			</tr>
+			<tr>
+				<td class="bodybold">Country/Region</td>
+				<td><input type="text" name="country" size="50"></td>
+			</tr>
+			<tr>
+				<td class="bodybold">Zip/Postal Code</td>
+				<td><input type="text" name="zip" size="50"></td>
+			</tr>
+			<tr>
+				<td class="bodybold">Telephone</td>
+				<td><input type="text" name="telephone" size="50"></td>
+			</tr>
+			<tr>
+				<td class="bodybold">Age</td>
+				<td>
+				<select name="age">
+					<option value="0" selected>Select</option>
+					<option value="18">18</option>
+					<option value="19">19</option>
+					<option value="20">20</option>
+					<option value="21">21</option>
+					<option value="22">22</option>
+					<option value="23">23</option>
+					<option value="24">24</option>
+					<option value="25">25</option>
+					<option value="26">26</option>
+					<option value="27">27</option>
+					<option value="28">28</option>
+					<option value="29">29</option>
+					<option value="30">30</option>
+					<option value="31">31</option>
+					<option value="32">32</option>
+					<option value="33">33</option>
+					<option value="34">34</option>
+					<option value="35">35</option>
+					<option value="36">36</option>
+					<option value="37">37</option>
+					<option value="38">38</option>
+					<option value="39">39</option>
+					<option value="40">40</option>
+					<option value="41">41</option>
+					<option value="42">42</option>
+					<option value="43">43</option>
+					<option value="44">44</option>
+					<option value="45">45</option>
+					<option value="46">46</option>
+					<option value="47">47</option>
+					<option value="48">48</option>
+					<option value="49">49</option>
+					<option value="50">50</option>
+					<option value="51">51</option>
+					<option value="52">52</option>
+					<option value="53">53</option>
+					<option value="54">54</option>
+					<option value="55">55</option>
+					<option value="56">56</option>
+					<option value="57">57</option>
+					<option value="58">58</option>
+					<option value="59">59</option>
+					<option value="60">60</option>
+					<option value="61">61</option>
+					<option value="62">62</option>
+					<option value="63">63</option>
+					<option value="64">64</option>
+					<option value="65">65</option>
+					<option value="66">66</option>
+					<option value="67">67</option>
+					<option value="68">68</option>
+					<option value="69">69</option>
+					<option value="70">70</option>
+					<option value="71">71</option>
+					<option value="72">72</option>
+					<option value="73">73</option>
+					<option value="74">74</option>
+					<option value="75">75</option>
+					<option value="76">76</option>
+					<option value="77">77</option>
+					<option value="78">78</option>
+					<option value="79">79</option>
+					<option value="80">80</option>
+					<option value="81">81</option>
+					<option value="82">82</option>
+					<option value="83">83</option>
+					<option value="84">84</option>
+					<option value="85">85</option>
+					<option value="86">86</option>
+					<option value="87">87</option>
+					<option value="88">88</option>
+					<option value="89">89</option>
+					<option value="90">90</option>
+					<option value="91">91</option>
+					<option value="92">92</option>
+					<option value="93">93</option>
+					<option value="94">94</option>
+					<option value="95">95</option>
+					<option value="96">96</option>
+					<option value="97">97</option>
+					<option value="98">98</option>
+					<option value="99">99</option>
+					<option value="100">100</option>
+					<option value="101">101</option>
+					<option value="102">102</option>
+					<option value="103">103</option>
+					<option value="104">104</option>
+					<option value="105">105</option>
+					<option value="106">106</option>
+					<option value="107">107</option>
+					<option value="108">108</option>
+					<option value="109">109</option>
+					<option value="110">110</option>
+					<option value="111">111</option>
+					<option value="112">112</option>
+					<option value="113">113</option>
+					<option value="114">114</option>
+					<option value="115">115</option>
+					<option value="116">116</option>
+					<option value="117">117</option>
+					<option value="118">118</option>
+					<option value="119">119</option>
+					<option value="120">120</option>
+					<option value="121">121</option>
+					<option value="122">122</option>
+					<option value="123">123</option>
+					<option value="124">124</option>
+					<option value="125">125</option>
+				</select>
+				</td>
+			</tr>
+			<tr>
+				<td class="bodybold">Gender</td>
+				<td>
+				<select name="gender">
+					<option value="1" selected>Select</option>
+					<option value="M">Male</option>
+					<option value="F">Female</option>
+				</select>
+				</td>
+			</tr>
+			<tr>
+				<td class="bodybold">Occupation</td>
+				<td><input type="text" name="occupation" size="50"></td>
+			</tr>
+			<tr>
+				<td class="bodybold">Employer Name</td>
+				<td><input type="text" name="employer_name" size="50"></td>
+			</tr>
+			<tr>
+				<td class="bodybold">Employment Status</td>
+				<td>
+				<select name="employment_type">
+					<option value="0" selected>Select</option>
+					<option value="Self Employed">Self Employed</option>
+					<option value="Unemployed">Unemployed</option>
+					<option value="Employed">Employed</option>
+					<option value="Disabled">Disabled</option>
+					<option value="Retired">Retired</option>
+				</select>
+				</td>
+			</tr>
+			<tr>
+				<td valign="top" class="bodybold">Resum&eacute; &nbsp;<span class="bodytext">(250 words)</span></td>
+				<td><textarea cols="38" rows="10" name="resume"></textarea></td>
+			</tr>
+			<tr>
+				<td colspan="2">&nbsp;</td>
+			</tr>
+			<tr>
+				<td colspan="2" align="right" class="bodybold"><a href="JavaScript:regform.submit();">register</a></td>
+			</tr>
+			</table>
+			</form>
+			<!--  -->
+			<br>
+			</td>
+			<td width="50">&nbsp;</td>
+		</tr>
+		</table>
+		<!-- site content -->
+		<br><br><br><br><br>		
+		
+<?php		
+	}
+	
+	function affiliate_registration_form_ack_content()
+	{
+		$table = "affiliate_applicants";
+		$set_clause = "position = '$this->position', 
+				region_id = $this->region_id,
+				email = '$this->email',
+				penname = '$this->penname',
+				display = '$this->display',
+				name_prefix = '$this->name_prefix',
+				first_name = '$this->first_name',
+				last_name = '$this->last_name',
+				password = '$this->password',
+				address_1 = '$this->address_1',
+				address_2 = '$this->address_2',
+				city = '$this->city',
+				state = '$this->state',
+				country =  '$this->country',
+				zip = '$this->zip',
+				telephone = '$this->telephone',
+				age = $this->age,
+				gender = '$this->gender',
+				occupation = '$this->occupation',
+				employer_name = '$this->employer_name',
+				employment_type = '$this->employment_type',
+				resume = '$this->resume'";
+				
+				
+		$applicants_pending=$this->applicants_pending($this->position, $this->region_id);
+		$applicants_available=$this->applicants_available($this->position, $this->population_for_region($this->region_id));
+		//DEBUG print "$applicants_available - $applicants_pending";
+		if ($applicants_available - $applicants_pending <1   )
+		{
+?>
+	<table>
+	<tr>
+	<td width="50">&nbsp;</td>
+	<td width=90% class=bodybold><?php print "Applications for this position are no longer being accepted.<br><br><br><br>";?></td></td>
+	<td width="50">&nbsp;</td>
+	</tr>
+	</table>
+<?php
+	exit;
+		}	
+		if( $this->db-> insert_DB($table, $set_clause))
+		{ 
+?>
+	<table>
+	<tr>
+	<td width="50">&nbsp;</td>
+	<td width=90% class=bodybold><?php print "Your resume has been entered into our database.<br><br>
+	Please print this page and retain your candidate number($this->db->insert_id) and password($this->password).<br>
+	You will need this to vote in candidate elections.
+	<br><br>";?></td></td>
+	<td width="50">&nbsp;</td>
+	</tr>
+	</table>
+<?php	
+		}
+//	if applicant total matches affiliate_positions_available positions for position and population
+//	then start voting process
+//		mark affiliate_countries status as pending
+//		set vote_start_date in affiliate_elections = today
+//		send mail to applicants
+//		allow voting on applicants
+
+		if (($applicants_available - $applicants_pending) ==1   ) //last applicant for position
+			{
+				$table = "affiliate_countries";
+				$set_clause = "status = 'pending' ";
+				$where_clause = "id = $this->region_id";
+				$this->db-> update_DB($table, $set_clause, $where_clause);
+				
+				$table = "affiliate_elections";
+				$voting_start_date = date("Y-m-d");
+				$set_clause ="region_id = $this->region_id, position = '$this->position', voting_start_date = '$voting_start_date'  ";
+				//DEBUG print $set_clause;
+				$this->db-> insert_DB($table, $set_clause);
+				
+				
+				//send mail to all applicants
+				
+				$table = "affiliate_applicants";
+				$select_clause = "email";
+				$where_clause = "region_id = $this->region_id AND position = '$this->position',";
+				$this->db->select_DB($table, $select_clause, $where_clause);
+			
+					while ($row = $this->db->fetch_assoc())
+					{
+						extract($row);
+						
+						//send mail to each applicant
+						$headers = "MIME-Version: 1.0\r\n"; 
+            						$headers .= "Content-type: text/html; charset=iso-8859-1\r\n"; 
+           						 $headers .= "From: webmaster@democracyrules.org\r\n"; 
+          						 $headers .= "cc: knight@microteck.com, vispsupport@gct21.net"; 
+          						 $message_body = "<table width=\"100%\" border=\"0\" 
+cellspacing=\"0\" cellpadding=\"0\"> 
+                <tr> 
+                        <td height=\"30\" align=\"right\" bgcolor=\"#FF0000\"> 
+                        <!-- top bar navigation --> 
+                        <table width=\"100%\" border=\"0\" cellspacing=\"0\" 
+cellpadding=\"0\"> 
+                        <tr> 
+                                <td width=\"207\" align=\"left\"> 
+                                <img 
+src=\"images/header/slogan.jpg\" width=207 
+height=20 border=0 alt=\"\"> 
+                                </td> 
+                                <td align=\"right\"> 
+                                 
+                                 
+                                </td> 
+                        </tr> 
+                        </table>\n\n 
+                <tr> 
+         
+                        <td height=\"100\" align=\"right\" valign=\"top\" 
+bgcolor=\"#FFFFFF\" 
+background=\"images/header/logo.jpg\">&nbsp;</td> 
+                </tr> 
+                <tr> 
+                        <td height=\"30\" bgcolor=\"#000080\"> 
+                        <!-- bottom bar navigation --> 
+                        <table width=\"100%\" border=\"0\" cellspacing=\"0\" 
+cellpadding=\"0\"> 
+                        <tr> 
+                                <td align=\"right\"> 
+                                 
+                                 
+                                </td> 
+                        </tr> 
+                        </table> 
+                </td></tr></table> 
+                        <br><br> 
+                        The election for the Democracy Rules employment position for which you have registered will begin in seven days.  The duration of this election is seven days.<br>
+                        "; 
+
+	
+	
+			mail($this->email, 
+			"Democracy Rules Affiliate Election Notification", 
+			$message_body,
+    			 $headers);
+				
+					}
+		
+		
+		
+		
+	}
+	
+	function affiliate_registrants_content()
+	{
+		$table = "affiliate_countries";
+		$select_clause = "*";
+		$where_clause = "id = $this->id";
+		$this->db->select_DB($table, $select_clause, $where_clause);
+			
+		extract($this->db->fetch_assoc());
+		$voting_status = $this->voting_status($this->id, $this->position);
+		
+		$table = "affiliate_applicants";
+		$select_clause = "*";
+		if ($voting_status == "primary"
+		OR $voting_status == "accepting")
+		{
+		
+			$where_clause = "region_id = $this->id AND position = '$this->position' ";
+		}
+		else
+		{
+			$number_limit = intval($this->applicants_available($this->position, $population) / 2);
+			$where_clause = "region_id = $this->id AND position = '$this->position' order by primary_votes desc  limit $number_limit ";
+		}
+		
+		$this->db->select_DB($table, $select_clause, $where_clause);
+		
+		
+?>		
+	<!-- site content -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="50">&nbsp;</td>
+			<td width="90%" valign="top" class="bodytext">
+			<span class="subhead1">Democracy Rules Employment Candidates</span><br><br>
+			<!-- gray bar -->
+			<table width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+			<tr>
+				<td class="bodybold"><?php print $country?> &raquo;&raquo; <?php print $region?> &raquo;&raquo; Population <?php print number_format($population)?></td>
+			</tr>
+			</table>
+			<!-- gray bar -->
+			
+			<br><br>
+			<!--  -->
+			<table width="600" border="0" cellspacing="0" cellpadding="2">
+			<tr>
+				<td width="150" class="bodybold">Forum Discussion</td>
+<?php
+			if ($voting_status == "accepting"
+			OR $voting_status == "intervote")
+			{
+?>
+				<td class="bodytext">OPEN</td>
+<?php
+			}
+			else
+			{
+?>
+				<td class="bodytext">CLOSED</td>
+<?php
+			}				
+?>			
+			</tr>
+			<tr>
+				<td class="bodybold">Primary Election</td>
+<?php
+			if ($voting_status == "accepting")
+			{
+?>
+				<td class="bodytext">PENDING</td>
+<?php		
+			}
+			else if ($voting_status == "primary")
+			{
+?>
+				<td class="bodytext">OPEN</td>
+<?php
+			}
+			else
+			{
+?>
+				<td class="bodytext">CLOSED</td>
+<?php
+			}				
+?>			
+			</tr>
+			<tr>
+				<td class="bodybold">Affiliate Election</td>
+<?php
+			if ($voting_status == "accepting"
+			OR $voting_status == "primary"
+			OR $voting_status == "intervote"
+			)
+			{
+?>
+				<td class="bodytext">PENDING</td>
+<?php		
+			}
+			else if ($voting_status == "final")
+			{
+?>
+				<td class="bodytext">OPEN</td>
+<?php
+			}
+			else
+			{
+?>
+				<td class="bodytext">CLOSED</td>
+<?php
+			}				
+?>	
+			</tr>
+			<tr>
+				<td class="bodybold"></td>
+				<td class="bodytext"></td>
+			</tr>
+		
+			</table>
+			<br><br>
+<?php 
+	while ($row = $this->db->fetch_assoc())
+	{
+		extract($row);
+?>
+			<form action="user_affiliates_vote_ack.php" method = POST>
+			<table border="1" cellspacing="0" cellpadding="0">
+			<tr>
+				<td>
+				<!-- /// -->
+				<table width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+ 				<tr>
+					<td width="150" class="bodybold">Applying Position</td>
+<?php
+					switch ($position) {
+						case "execdir":
+?>
+					<td width = 400 class="bodytext">Executive &amp; Assistant Directors</td>
+<?php
+					break;
+						case "bd":
+?>
+					<td class="bodytext">Board of Directors</td>
+<?php
+					break;
+						case "admin":
+?>					
+					<td class="bodytext">Administrator</td>
+<?php
+					break;
+						case "lob":
+?>					
+					<td class="bodytext">Lobbyist</td>
+<?php
+					break;
+						case "res":
+?>					
+					<td class="bodytext">Researcher</td>
+<?php
+					break;
+						case "tech":
+?>					
+					<td class="bodytext">Technician</td>
+<?php
+					break;
+						case "invest":
+?>					
+					<td class="bodytext">Investigator</td>
+					
+<?php					
+					break;
+					}
+?>
+				</tr>
+				<tr>
+					<td class="bodybold">Alias/Pen-Name</td>
+<?php				if ($display == "penname")
+				{
+?>
+					<td class="bodytext"><?php print $penname?></td>
+<?php				} else
+				{
+?>				
+					<td class="bodytext">Not Displayed</td>
+<?php
+				}
+?>				
+				</tr>
+				<tr>
+					<td class="bodybold">First/Last Name</td>
+<?php				if ($display != "penname")
+				{
+?>
+					<td class="bodytext"><?php print "$first_name $last_name"?></td>
+<?php				} else
+				{
+?>				
+					<td class="bodytext">Not Displayed</td>
+<?php
+				}
+?>					
+					
+				</tr>
+				<tr>
+					<td valign="top" class="bodybold">Qualifications</td>
+					<td valign="top" class="bodytext"><?php print nl2br($resume) ?></td>
+				</tr>
+				<tr>
+					<td class="bodybold">Candidate No.&nbsp; <?php print $id?></td>
+					<td class="bodytext">
+<?php	
+				if ($voting_status == "primary"
+				OR $voting_status == "final")
+				{
+?>
+						<input type="submit" name="vote" value="Vote for this Candidate" class="bodytext">
+<?php	
+				}
+?>						
+						<input type = hidden name = region_id value = <?php print $this->id?> >
+						<input type = hidden name = voted_for  value = <?php print $id?> >
+						<input type = hidden name = position  value = <?php print $this->position?> >
+					</td>
+					
+				</tr>
+				</table>
+				<!-- /// -->
+				</td>
+			</tr>
+			</table><br></form>
+<?php
+	}
+?>
+			
+			
+				
+			
+			<!--  -->
+			<br>
+			</td>
+			<td width="50">&nbsp;</td>
+		</tr>
+		</table>
+		<!-- site content -->
+		<br><br><br><br><br>	
+		
+<?php		
+	}
+
+	function affiliate_vote_ack()
+	{
+		$table = "affiliate_countries";
+		$select_clause = "*";
+		$where_clause = "id = $this->region_id";
+		$this->db->select_DB($table, $select_clause, $where_clause);
+			
+		extract($this->db->fetch_assoc());
+?>		
+	<!-- site content -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="50">&nbsp;</td>
+			<td width="90%" valign="top" class="bodytext">
+			<span class="subhead1">Democracy Rules Employment Candidate Voting</span><br><br>	
+			<!-- gray bar -->
+			<table width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+			<tr>
+				<td class="bodybold"><?php print $country?> &raquo;&raquo; <?php print $region?> &raquo;&raquo; Population <?php print number_format($population)?></td>
+			</tr>
+			</table>
+			<!-- gray bar -->
+			<br><br>
+			<div class = bodytext>
+<?php
+			$voting_status = $this->voting_status($this->region_id, $this->position);
+			if ($voting_status == "primary" OR $voting_status == "final")
+			{
+?>		
+			In order to participate in this <?php print $voting_status?> election, you must supply your candidate number and password. If you do not remember these, choose LOST ID from the main menu.<br><br>
+			
+			<TABLE><FORM action = "user_affiliates_vote_count.php" method =GET>
+			<TR><TD class="bodytext">My Candidate ID:</TD><TD><input type = text name = candidate_id value = "<?php print $candidate_id?>" size =3></TD></TR>
+			<TR><TD class="bodytext">My Password:</TD><TD><input type = password name = password size =15></TD></TR>
+			<TR><TD colspan = 2>I am voting for candidate #<?php print $this->voted_for?> <?php print $this->applicant_name($this->voted_for)?></TD></TR>
+			<TR><TD class="bodytext"><input type = submit value = "CAST MY VOTE"></TD></TR>
+			<input type = hidden name = voted_for value = <?php print $this->voted_for?> >
+			<input type = hidden name = region_id  value = <?php print $this->region_id?> >
+			<input type = hidden name = position  value = <?php print $this->position?> >
+			</FORM></TABLE>
+<?php
+			}
+			else
+			{
+?>
+			There is no election currently active.
+<?php	
+			}
+?>
+			</div>
+			<td width="50">&nbsp;</td>
+		</tr>
+		</table>
+<?php
+				
+		
+		
+	}
+	
+	function affiliate_vote_count()
+	{
+		$table = "affiliate_countries";
+		$select_clause = "*";
+		$where_clause = "id = $this->region_id";
+		$this->db->select_DB($table, $select_clause, $where_clause);
+			
+		extract($this->db->fetch_assoc());
+		
+		//cannot vote for self
+		if ($this->candidate_id == $this->voted_for)
+		{
+			$error_message = "You cannot vote for yourself. Go back and vote for another candidate.";
+		}
+		
+		
+		//cannot vote more than once
+		if ($this->check_voted_before($this->candidate_id,  "voted_in_".$this->voting_status($this->region_id, $this->position)))
+		{
+			$error_message = "You have already voted in this election. You cannot vote again.";
+		}
+		
+		
+		//record the vote
+		if (!$error_message)
+		{
+			$table = "affiliate_applicants";
+			$field_str = $this->voting_status($this->region_id, $this->position)."_votes";
+			$set_clause = "$field_str = ($field_str + 1)";
+			$where_clause = "id = $this->voted_for";
+			//print "$set_clause $where_clause";
+			$this->db->update_DB($table, $set_clause, $where_clause);
+		}
+		
+		
+		// set voted_in_primary or voted_in_final to "Y"
+		if (!$error_message)
+		{
+				//set voted_in	
+			$field_str = "voted_in_".$this->voting_status($this->region_id, $this->position);
+			$table = "affiliate_applicants";
+			$set_clause = "$field_str = 'Y'";
+			$where_clause = "id = $this->candidate_id";
+			$this->db->update_DB($table, $set_clause, $where_clause);
+		}
+		
+?>		
+	<!-- site content -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="50">&nbsp;</td>
+			<td width="90%" valign="top" class="bodytext">
+			<span class="subhead1">Democracy Rules Employment Candidate Voting</span><br><br>	
+			<!-- gray bar -->
+			<table width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+			<tr>
+				<td class="bodybold"><?php print $country?> &raquo;&raquo; <?php print $region?> &raquo;&raquo; Population <?php print number_format($population)?></td>
+			</tr>
+			</table>
+			<!-- gray bar -->
+			<br><br>
+<?php 
+			if ($error_message)
+			{
+				print $error_message;
+				
+			}
+			else
+			{
+				print "Thank You. Your vote has been recorded.";
+			}
+			
+?>
+			<br><br><br><br><br>
+			<td width="50">&nbsp;</td>
+		</tr>
+		</table>
+<?php
+				
+		
+		
+	}
+	
+	
+	function affiliate_registrants_archives_content()
+	{
+		$table = "affiliate_countries";
+		$select_clause = "*";
+		$where_clause = "1";
+		$this->db->select_DB($table, $select_clause, $where_clause);
+		
+?>		
+		<!-- site content -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="50">&nbsp;</td>
+			<td width="90%" valign="top" class="bodytext">
+			<span class="subhead1">Archives</span><br><br>
+			<!-- gray bar -->
+	<table width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+	<tr>
+		<td class="bodybold">Select an Affiliate to View Election Results</td>
+	</tr>
+	</table>
+	<!-- gray bar -->
+	<br>
+
+			<table border="1" cellspacing="0" cellpadding="0">
+			<tr>
+				<td>
+				<!-- /// -->
+				<table border="1" cellspacing="0" cellpadding="0">
+				<tr>
+					<td>
+					<!-- /// -->
+					<table border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+					<tr>
+						<td width="225" class="bodytext">Accepting Applications = <img src="images/global/bullet_green.gif" alt="" width="9" height="9" border="0"></td>
+						<td width="192" class="bodytext">Elections Pending = <img src="images/global/bullet_yellow.gif" alt="" width="9" height="9" border="0"></td>
+						<td width="174" class="bodytext">Positions Filled = <img src="images/global/bullet_orange.gif" alt="" width="9" height="9" border="0"></td>
+					</tr>
+					</table>
+					<!-- /// -->
+					</td>
+				</tr>
+				</table>
+				<!-- /// -->
+				</td>
+			</tr>
+			</table>
+			<br>
+			<!-- Header -->
+			<table border="1" cellspacing="0" cellpadding="0">
+			<tr>
+				<td>
+				<!-- /// -->
+				<table border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+				<tr>
+					<td width="150" class="bodybold">National Affiliates</td>
+					<td width="320" class="bodybold">Agglomerate Affiliates</td>
+					<td width="100" align="right" class="bodybold">Population</td>
+					<td width="20" align="right">&nbsp;</td>
+				</tr>
+				</table>
+				<!-- /// -->
+				</td>
+			</tr>
+			</table>
+			<!-- Header -->
+			<br>
+<?php
+	$previous_country = "";
+			while ($result_row =& $this->db->fetch_assoc()  )
+		
+		{	
+			extract($result_row);
+			if ($previous_country != $country) {$open_table = true;} else {$open_table =false;} 
+			if ($previous_country == "") {$first_table =true;} else {$first_table = false;}
+?>
+<?php
+	//echo "$previous_country != $country";
+		if ($open_table)
+		{
+			if (!$first_table)
+			{
+?>			
+				</table>
+				
+
+				<!-- close_table -->
+				</td>
+			</tr>
+			</table>
+			<br>
+<?php
+			}
+?>		
+			<table border="1" cellspacing="0" cellpadding="0">
+			<tr>
+				<td>
+				<!-- open_table -->
+
+				<table border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+<?php
+		}
+?>
+				<tr>
+					<td width="150" class="bodytext"><a href="user_affiliates_registrants_archives_b/?id=<?php print $id?>"><?php if ($region == "MAIN") {print $country;}?></a></td>
+					<td width="320" class="bodytext"><a href="user_affiliates_registrants_archives_b/?id=<?php print $id?>"><?php if ($region != "MAIN") {print $region;}?></a></td>
+					<td width="100" align="right" class="bodytext"><?php print number_format($population)?></td>
+					<td width="20" align="right">
+				<?php if ($status == "accepting") { ?>	
+					<img src="images/global/bullet_green.gif" alt="" width="9" height="9" border="0">
+				<?php } else if ($status == "pending") {?>
+					<img src="images/global/bullet_yellow.gif" alt="" width="9" height="9" border="0">
+				<?php } else if ($status == "filled") {?>
+					<img src="images/global/bullet_orange.gif" alt="" width="9" height="9" border="0">
+				<?php }?>
+					</td>
+				</tr>	
+<?php
+			
+		if ($open_table)
+		{				
+?>				
+				
+<?php
+		$previous_country = $country;
+		}
+?>
+<?php
+		
+		}			
+?>
+
+				</table>
+				
+
+				<!-- close_table -->
+				</td>
+			</tr>
+			</table>
+			<br>			
+		<br>
+			</td>
+			<td width="50">&nbsp;</td>
+		</tr>
+		</table>
+		<!-- site content -->
+		<br><br><br><br><br>
+				
+		
+<?php		
+	}
+
+
+	function affiliate_registrants_archives_b_content()
+	{
+		$table = "affiliate_countries";
+		$select_clause = "*";
+		$where_clause = "id = $this->id";
+		$this->db->select_DB($table, $select_clause, $where_clause);
+			
+		extract($this->db->fetch_assoc());
+?>		
+	<!-- site content -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="50">&nbsp;</td>
+			<td width="90%" valign="top" class="bodytext">
+			<span class="subhead1">Archives</span><br><br>
+			<!-- gray bar -->
+			<table width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+			<tr>
+				<td class="bodybold"><?php print $country?> &raquo;&raquo; <?php print $region?></td>
+			</tr>
+			</table>
+			<!-- gray bar -->
+			<br><br>
+			<!--  -->
+			<a href="user_affiliates_registrants_archives_c.php?region_id=<?php print $this->id?>&position=execdir">Executive and Assistant Director</a><br>
+			<a href="#">Board of Directors</a><br>
+			<a href="#">Administrator</a><br>
+			<a href="#">Lobbyist</a><br>
+			<a href="#">Researcher</a><br>
+			<a href="#">Technician</a><br>
+			<a href="#">Investigator</a><br>
+			<!--  -->
+			<br>
+			</td>
+			<td width="50">&nbsp;</td>
+		</tr>
+		</table>
+		<!-- site content -->
+		<br><br><br><br><br>	
+<?php				
+	}
+	
+	
+	function affiliate_registrants_archives_c_content()
+	{
+		$table = "affiliate_countries";
+		$select_clause = "*";
+		$where_clause = "id = $this->region_id";
+		$this->db->select_DB($table, $select_clause, $where_clause);
+			
+		extract($this->db->fetch_assoc());
+		switch ($this->position) {	
+			case "execdir":
+				$print_title = "Executive &amp; Assistant Director";	
+				break;
+			case "bd":
+				$print_title = "Board of Directors";	
+				break;
+			case "admin":
+				$print_title = "Administrator";	
+				break;
+			case "lob":
+				$print_title = "Lobbyist";	
+				break;
+			case "res":
+				$print_title = "Researcher";	
+				break;
+			case "tech":
+				$print_title = "Technician";	
+				break;
+			case "invest":
+				$print_title = "Investigator";	
+				break;	
+			}
+		$status = $this->status_for_region($this->region_id);
+		
+		
+?>		
+	<!-- site content -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="50">&nbsp;</td>
+			<td width="90%" valign="top" class="bodytext">
+			<span class="subhead1">Archives</span><br><br>
+			<!-- gray bar -->
+			<table width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+			<tr>
+				<td class="bodybold"><?php print $country?> &raquo;&raquo; <?php print $region?> &raquo;&raquo; <?php print $print_title?></td>
+			</tr>
+			</table>
+			<!-- gray bar -->
+			<br><br>
+<?php
+		if ($status == "accepting")
+		{
+?>			
+		No election results yet.<br>	
+<?php		
+			
+		}
+		else 
+		{
+?>
+			<!--  -->
+			<a href="user_affiliates_registrants_archives_d.php?region_id=<?php print $this->region_id?>&position=<?php print $this->position?>&election=primary">Primary Election</a><br>
+			<a href="user_affiliates_registrants_archives_d.php?region_id=<?php print $this->region_id?>&position=<?php print $this->position?>&election=final">Affiliate Election</a><br>
+			<!--  -->
+			<br>
+<?php		
+			
+		}
+		
+?>
+			</td>
+			<td width="50">&nbsp;</td>
+		</tr>
+		</table>
+		<!-- site content -->
+		<br><br><br><br><br>	
+<?php		
+	}
+	
+	
+	function affiliate_registrants_archives_d_content()
+	{
+		$table = "affiliate_countries";
+		$select_clause = "*";
+		$where_clause = "id = $this->region_id";
+		$this->db->select_DB($table, $select_clause, $where_clause);
+			
+		extract($this->db->fetch_assoc());
+		switch ($this->position) {	
+			case "execdir":
+				$print_title = "Executive &amp; Assistant Director";	
+				break;
+			case "bd":
+				$print_title = "Board of Directors";	
+				break;
+			case "admin":
+				$print_title = "Administrator";	
+				break;
+			case "lob":
+				$print_title = "Lobbyist";	
+				break;
+			case "res":
+				$print_title = "Researcher";	
+				break;
+			case "tech":
+				$print_title = "Technician";	
+				break;
+			case "invest":
+				$print_title = "Investigator";	
+				break;	
+			}
+		$voting_status = $this->status_for_region($this->region_id);
+		
+		$table = "affiliate_applicants";
+		$select_clause = "*";
+		if ($this->election == "primary")
+		{
+			$election_title = "Primary Election";
+			$where_clause = "region_id = $this->region_id AND position = '$this->position' order by primary_votes desc ";
+		}
+		else
+		{
+			$election_title = "Affiliate Election";
+			$number_limit = intval($this->applicants_available($this->position, $population) / 2);
+			$where_clause = "region_id = $this->region_id AND position = '$this->position' order by primary_votes desc  limit $number_limit ";
+		}	
+		$this->db->select_DB($table, $select_clause, $where_clause);
+
+?>
+		<!-- site content -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="50">&nbsp;</td>
+			<td width="90%" valign="top" class="bodytext">
+			<span class="subhead1">Archives</span><br><br>
+			<!-- gray bar -->
+			<table width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+			<tr>
+				<td class="bodybold"><?php print $country?> &raquo;&raquo; <?php print $region?> &raquo;&raquo; <?php print $print_title?>&raquo;&raquo;<?php print $election_title?></td>
+			</tr>
+			</table>
+			<!-- gray bar -->
+			<br><br>
+<?php 
+	while ($row = $this->db->fetch_assoc())
+	{
+		extract($row);
+		if ($this->election == "primary")
+		{ $votes_received = $primary_votes; } else { $votes_received = $final_votes;}
+?>
+			<!--  -->
+			<table border="1" cellspacing="0" cellpadding="0">
+			<tr>
+				<td>
+
+				<!-- /// -->
+				
+
+				<table width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+				<tr>
+					<td width="150" class="bodybold">Applying Position</td>
+					<td width = 400 class="bodytext"><?php print $print_title?></td>
+				</tr>
+								<tr>
+					<td class="bodybold">Alias/Pen-Name</td>
+<?php				if ($display == "penname")
+				{
+?>
+					<td class="bodytext"><?php print $penname?></td>
+<?php				} else
+				{
+?>				
+					<td class="bodytext">Not Displayed</td>
+<?php
+				}
+?>				
+				</tr>
+				<tr>
+					<td class="bodybold">First/Last Name</td>
+<?php				if ($display != "penname")
+				{
+?>
+					<td class="bodytext"><?php print "$first_name $last_name"?></td>
+<?php				} else
+				{
+?>				
+					<td class="bodytext">Not Displayed</td>
+<?php
+				}
+?>					
+					
+				</tr>
+								<tr>
+					<td valign="top" class="bodybold">Qualifications</td>
+					<td valign="top" class="bodytext"><?php print nl2br($resume) ?></td>
+				</tr>
+				<tr>
+					<td class="bodybold">Votes Received</td>
+					<td class="bodytext"><?php print $votes_received?></td>
+				</tr>
+				<tr>
+					<td class="bodybold">Candidate No.&nbsp; <?php print $id?></td>
+					<td class="bodytext">&nbsp;</td>
+				</tr>
+				</table>
+				<!-- /// -->
+
+				</td>
+			</tr>
+			</table>
+			<br>
+<?php
+		}
+?>			
+			
+			<!--  -->
+			<br>
+			</td>
+			<td width="50">&nbsp;</td>
+		</tr>
+		</table>
+		<!-- site content -->
+		<br><br><br><br><br>
+<?php
+	}
+	
+	function affiliate_website_capabilities_content()
+	{
+?>		
+		<!-- site content -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="50">&nbsp;</td>
+			<td width="90%" valign="top" class="bodytext">
+			<span class="subhead1">Democracy Rules Website Capabilities</span><br><br>
+			<!--  -->
+			<ol>
+				<li>Archives including 8 separate records maintained real time</li>
+				<li>Automatic screen sizing</li>
+				<li>Automatic 28-day presentation cycle timing</li>
+				<li>Credit card and check mail-in acceptance</li>
+				<li>Data is encrypted, protected and backed up</li>
+				<li>Dual-sized images linked to all issues and headlines</li>
+				<li>Easy data input &amp; presentation cycle maintenance with pre-display viewing</li>
+				<li>Email announcements by issues pledged</li>
+				<li>Email special announcements</li>
+				<li>Email voter recommendations on issues pledged</li>
+				<li>Instruction menu for each administration page</li>
+				<li>Inter- affiliate communication</li>
+				<li>Interactive, issue dedicated, Email-enabled forums</li>
+				<li>Issue, Aid and Campaign home page headlines</li>
+				<li>Issue &amp; trustee suggestion acceptance capability</li>
+				<li>Language translation covering 92% of internet language usage</li>
+				<li>Manager permissions for each administrative function</li>
+				<li>Member, manager, trustee and affiliate mailing capability</li>
+				<li>Members personal account including histories and 'draw from account' capability</li>
+				<li>Navigation bar for users and administration</li>
+				<li>Prewritten letter subject texts capability</li>
+				<li>Quick Login/Logout, Lost ID, Merchandise, FAQ, Civics and Tell a Friend functions</li>
+				<li>Security</li>
+				<li>Top ten administrative listing of the most popularly polled issues</li>
+				<li>Trustee evaluation and performance records</li>
+				<li>Viewer opinion polls</li>
+				<li>Zip code-directed, membership database-integrated letter-writing station</li>
+			</ol>
+			<!--  -->
+			<br>
+			</td>
+			<td width="50">&nbsp;</td>
+		</tr>
+		</table>
+		<!-- site content -->
+		<br><br><br><br><br>		
+		
+		
+<?php		
+	}
+	
+	function affiliate_lost_id_content()
+	{
+?>		
+	<!-- site content -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="50">&nbsp;</td>
+			<td width="90%" valign="top" class="bodytext">
+			<span class="subhead1">Lost Affiliate ID</span><br><br>
+			<!--  -->
+			<table width="100%" border="0" cellspacing="0" cellpadding="0">
+			<tr>
+				<td valign="top" class="bodytext">
+				Forgot your ID or password?&nbsp; We can help!&nbsp; Enter the email address you used when first registering with Democracy Rules.&nbsp; We will send your password to that address.<br><br>
+				<form name ="lost_id_form" action="user_affiliates_lost_id_send.php" method="POST">
+				<table border="0" cellspacing="0" cellpadding="2">
+				<tr>
+					<td class="bodybold">Email Address</td>
+					<td><input type="text" name="email" size="50"></td>
+				</tr>
+				<tr>
+					<td height="5" colspan="2"></td>
+				</tr>
+					<tr>
+					<td colspan="2" align="right" class="bodybold"><a href="JavaScript:document.lost_id_form.submit();">send lost Password</a></td>
+				</tr>
+				</table>
+				</form>		
+				</td>
+				<td width="260" align="right" valign="top"><img src="images/global/lost_id.jpg" alt="" width="250" height="260" border="1"></td>
+			</tr>
+			</table>
+			<!--  -->
+			<br>
+			</td>
+			<td width="50">&nbsp;</td>
+		</tr>
+		</table>
+		<!-- site content -->
+		<br><br><br><br><br>	
+<?php		
+	}
+		
+	function affiliate_lost_id_send_content()
+	{
+		
+		//first lookup the email address in UserMaster
+		$table = "affiliate_applicants";
+		$select_clause1 = "id";
+		$where_clause = "email = '$this->email' ";
+		if($this->db->select_one_DB($table, $select_clause1, $where_clause))
+		
+		{
+			$result_row = $this->db->fetch_row();
+			$userID = $result_row[0];
+		}
+		
+		$select_clause = "password";
+	 	
+		if($this->db->select_one_DB($table, $select_clause, $where_clause))
+		
+		{
+			
+			$result_row = $this->db->fetch_row();
+			$password = $result_row[0];
+?>
+	<!-- site content -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="50">&nbsp;</td>
+			<td width="90%" valign="top" class="bodytext">
+			<span class="subhead1">Lost Affiliate ID</span><br><br>
+			<!--  -->
+			<table width="100%" border="0" cellspacing="0" cellpadding="0">
+			<tr>
+				<td valign="top" class="bodytext">
+<?php				
+				if($this->email =="")
+				{
+					echo "Sorry, We could not find a record for that email address.";
+				}else
+				{	
+					echo " Your Candidate Number and Password have been emailed to you.";	
+				}
+?>	
+				</td>
+			</tr>
+			</table>
+			<!--  -->
+			<br>
+			</td>
+			<td width="50">&nbsp;</td>
+		</tr>
+		</table>
+		<!-- site content -->
+		<br><br><br><br><br>
+<?php
+	$headers = "MIME-Version: 1.0\r\n"; 
+                $headers .= "Content-type: text/html; charset=iso-8859-1\r\n"; 
+                $headers .= "From: webmaster@democracyrules.org\r\n"; 
+                $headers .= "cc: knight@microteck.com, vispsupport@gct21.net"; 
+                $message_body = "<table width=\"100%\" border=\"0\" 
+cellspacing=\"0\" cellpadding=\"0\"> 
+                <tr> 
+                        <td height=\"30\" align=\"right\" bgcolor=\"#FF0000\"> 
+                        <!-- top bar navigation --> 
+                        <table width=\"100%\" border=\"0\" cellspacing=\"0\" 
+cellpadding=\"0\"> 
+                        <tr> 
+                                <td width=\"207\" align=\"left\"> 
+                                <img 
+src=\"images/header/slogan.jpg\" width=207 
+height=20 border=0 alt=\"\"> 
+                                </td> 
+                                <td align=\"right\"> 
+                                 
+                                 
+                                </td> 
+                        </tr> 
+                        </table>\n\n 
+                <tr> 
+         
+                        <td height=\"100\" align=\"right\" valign=\"top\" 
+bgcolor=\"#FFFFFF\" 
+background=\"images/header/logo.jpg\">&nbsp;</td> 
+                </tr> 
+                <tr> 
+                        <td height=\"30\" bgcolor=\"#000080\"> 
+                        <!-- bottom bar navigation --> 
+                        <table width=\"100%\" border=\"0\" cellspacing=\"0\" 
+cellpadding=\"0\"> 
+                        <tr> 
+                                <td align=\"right\"> 
+                                 
+                                 
+                                </td> 
+                        </tr> 
+                        </table> 
+                </td></tr></table> 
+                        <br><br> 
+                        Your Candidate Number is $userID and your password is $password.<br>
+                        "; 
+
+	
+	
+			mail($this->email, 
+			"Democracy Rules Affiliate Candidate Password", 
+			$message_body,
+    			 $headers);
+
+		}
+		else
+		{
+?>
+<!-- site content -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="50">&nbsp;</td>
+			<td width="90%" valign="top" class="bodytext">
+			<span class="subhead1">Lost ID</span><br><br>
+			<!--  -->
+			<table width="100%" border="0" cellspacing="0" cellpadding="0">
+			<tr>
+				<td valign="top" class="bodytext">
+				Sorry.  We could not find a record for that email address.
+				</td>
+			</tr>
+			</table>
+			<!--  -->
+			<br>
+			</td>
+			<td width="50">&nbsp;</td>
+		</tr>
+		</table>
+		<!-- site content -->
+		<br><br><br><br><br>
+
+<?php
+		}
+	}
+		
+	function affiliate_election_status_cleanup()
+	{
+		//runs daily to determine if elections are closed
+		//check each position and if closed, move winners to incumbents file
+		//first get all the regions
+		$table = "affiliate_elections";
+		
+		$select_clause = "*";
+		$where_clause = "1 order by region_id ";
+		$this->db->select_DB($table, $select_clause, $where_clause);
+		while ($row = $this->db->fetch_assoc())
+		{
+			extract($row);
+		
+			//DEBUG print "$region_id, $position -- ";print $this->voting_status($region_id, $position);print "<br>";
+			
+			$number_of_incumbents = $this->positions_available($position, $this->population_for_region($region_id));
+			
+			//DEBUG print "number of incumbents = $number_of_incumbents<br><br>";
+			if ($this->voting_status($region_id, $position) == "closed")
+			{
+				//get the winners
+				$this->db1 =& new AED();
+				$table = "affiliate_applicants";
+		
+				$select_clause = "*";
+				$where_clause = "region_id = $region_id AND position = '$position' order by final_votes desc,  time_stamp limit $number_of_incumbents";
+				$this->db1->select_DB($table, $select_clause, $where_clause);
+				while ($row1 = $this->db1->fetch_assoc())
+				{
+					extract($row1);
+					//DEBUG print "winner $id<br>";
+					
+				
+				
+				//update the incumbent file for this position
+				$table = "affiliate_incumbents";
+				$set_clause = "id = $id, 
+					          region_id = $region_id, 
+					          position = '$position',
+					          primary_votes = $primary_votes,
+					          final_votes = $final_votes,
+					          voted_in_primary = '$voted_in_primary',
+					          voted_in_final = '$voted_in_final',
+					          email = '$email',
+					          penname = '$penname',
+					          display = '$display',
+					          name_prefix = '$name_prefix',
+					          first_name = '$first_name',
+					          last_name = '$last_name',
+					          password = '$password',
+					         address_1 = '$address_1',
+					         address_2 = '$address_2',
+					         city = '$city',
+					         state = '$state',
+					         country = '$country',
+					         zip ='$zip',
+					         telephone = '$telephone',
+					         age = '$age',
+					         gender = '$gender',
+					         occupation = '$occupation',
+					         employer_name = '$employer_name',
+					         employment_type ='$employment_type',
+					         resume = '$resume' 
+					          ";
+				
+				
+				$this->db-> insert_DB($table, $set_clause);
+				}
+			}
+			
+			
+		}
+				
+		
+		
+		//check for all positions filled and set closed button on main country list.
+			
+		
+		
+	}
+		
+	function faq_content()
+	{
+		
+		?>
+		<!-- site content -->
+		<script language="javascript" type="text/javascript">
+		function Help( daLink ) {
+			var comwin = window.open(daLink,'Help','width=400,height=400,scrollbars=yes,resize=yes');
+			comwin.focus(); 
+			}
+		</script>
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+<tr>
+	<td width="50">&nbsp;</td>
+	<td width="90%" valign="top" class="bodytext">
+	<span class="subhead1">Frequently Asked Questions</span><br><br>
+	<!-- --> 
+	<ul>
+	<?
+		include_once("class/AED.phpclass");
+		$dbcon = new AED();
+		$dbcon->select_DB( "affiliate_faq", "*", "faqCode > 0");
+			while ($result_row =& $dbcon->fetch_assoc()  )
+			{
+				foreach($result_row as $i => $data) 
+				{
+					$this->$i = $data;
+				}
+				?>
+				<li><a href="javascript:Help('user_affiliate_faq_answers.php?faqCode=<?php print $this->faqCode; ?>')"><?echo "$this->faqTitle";?></a><br><br>
+				<?
+			}
+	?>	
+	</ul>
+	
+	<br>
+	</td>
+	<td width="50">&nbsp;</td>
+</tr>
+</table>
+		<!-- site content -->
+		<?		
+	}
+	
+	
+	function faq_answers_content($faqCode) 
+	{
+	?>
+	<!-- help content -->
+	<table width="100%" border="0" cellspacing="0" cellpadding="0">
+	<tr>
+	<td width="50">&nbsp;</td>
+	<td width="90%" valign="top" class="bodytext">
+	<span class="subhead1">Frequently Asked Questions</span><br><br>
+	<!-- gray bar -->
+	<table width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+	<tr>
+		<td align="right" class="bodybold"><a href="javascript:window.close();" class="hlink">Close</a></td>
+	</tr>
+	</table>
+	<!-- gray bar -->
+	<br>
+	<!-- Answers to FAQ appear in this area...-->
+	<?
+	include_once("class/AED.phpclass");
+		$dbcon = new AED();
+		$dbcon->select_DB( "affiliate_faq", "*", "faqCode = $faqCode");
+			while ($result_row =& $dbcon->fetch_assoc()  )
+			{
+				foreach($result_row as $i => $data) 
+				{
+					$this->$i = $data;
+				}
+				$this->faqDesc = nl2br($this->faqDesc);
+				echo "$this->faqDesc";
+			}	
+	?>	
+	<br>
+	<!-- gray bar -->
+	<table width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+	<tr>
+		<td align="right" class="bodybold"><a href="javascript:window.close();" class="hlink">Close</a></td>
+	</tr>
+	</table>
+	<!-- gray bar -->
+	<br>
+	</td>
+	<td width="50">&nbsp;</td>
+	</tr>
+	</table>
+	<!-- help content -->	
+	<?
+	}	
+		
+	
+}
