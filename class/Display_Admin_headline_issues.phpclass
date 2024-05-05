@@ -1,0 +1,499 @@
+<?php
+//##############################################################
+//#	Title: Display_Admin_headline_issues Class Definition
+//#	File Name: Display_Admin_headline_issues.phpclass
+//#	Written By:  JWN	Date: 2/4/02
+//#	Written For:	democracyrules.org
+//#	Summary:
+//#		
+//##############################################################
+require("class/Display_Admin.phpclass");
+class Display_Admin_headline_issues extends Display_Admin
+{
+	
+
+	function headlines_table()
+	{
+?>
+	<script>
+	function check_for_entry(theform)
+	{
+		//alert('here')
+		
+		if (!document.entry_form.headline_title.value)
+		{
+			alert('You must provide a title for this headline')
+		
+		}
+		else
+		{
+			document.entry_form.submit()
+		}
+		
+	}
+	</script>	
+	<!-- define new headlines -->
+	<form action="admin_headline_issues_ack.php" method = "POST" name = "entry_form" >
+	<table width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr>
+		<td class="bodybold">Start Date</td>
+	</tr>
+	<tr>
+        <?php //$this->start_date = null;?>
+		<td><input type="text" id ="start_date" name="start_date" value = "<?php echo $this->start_date?>" 
+                           onClick="cal.select(document.forms['entry_form'].start_date,'start_date','MM/dd/yyyy'); return false; this.blur()" ></td>
+	</tr>
+	<tr>
+		<td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td class="bodybold">Title</td>
+	</tr>
+	<tr width = "200px">
+        <?php //$this->headline_title = '';?>
+		<td background = "yellow"><input type="text" name="headline_title" size="20" class="bodytext" value = "<?php echo $this->headline_title?>"></td>
+	</tr>
+	<tr>
+		<td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td class="bodybold">Content</td>
+	</tr>
+	<tr>
+        <?php //$this->headline_content = ''?>
+		<td><textarea cols=50 rows=10 name="headline_content" class="bodytext"  ><?php echo $this->headline_content?></textarea></td>
+	</tr>
+	<tr>
+		<td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td class="bodybold">Image</td>
+	</tr>
+	<tr>
+		<td>
+		<select name="headline_image">
+		
+		
+		<option value="" >No Image</option>
+		
+		<?php $this->image_drop_down($this->headline_image);
+		?>
+
+			
+		
+		</select>
+		</td>
+	</tr>
+	<tr>
+		<td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td class="bodybold">Subcategory Link</td>
+	</tr>
+	<tr>
+		<td>
+		<select name="category_link">
+		<option value="0" >No Link</option>
+<?php		
+		
+		$select = "id,category, description,parent_id";
+		$where = "parent_id = 1 AND status='active' ORDER BY category"; //parent_id";
+		$this->db->select_DB('category', $select, $where);
+		//DEBUG 
+		//print $this->db->num_rows();
+		while ($result_row = $this->db->fetch_assoc())
+		{
+			foreach($result_row as $i => $data) 
+			{
+				$this->$i = $data;
+			
+		}
+			include_once("class/Display_Admin_category.phpclass");
+	
+			$dispcat = new Display_Admin_category($HTTP_POST_VARS, $GLOBALS, $this->admin_logged_in);
+			$num_subcats = $dispcat->get_num_children($this->id);	
+			if (0 < $num_subcats)
+			{
+				$dispsubcats = new AED();
+				$select1 = "id,category,description,parent_id";
+				$where1 = "parent_id = $this->id AND status='active' ORDER BY category";
+				$dispsubcats->select_DB('category', $select1, $where1);
+                //$this->category_link = "135";
+				while ($result_row1 = $dispsubcats->fetch_assoc())
+				{
+					foreach($result_row1 as $i => $data) 
+					{
+						$dispsubcats->$i = $data;
+					}
+				?>
+					<option value = "<?php echo $dispsubcats->id?>"
+                            <?php  if ( $dispsubcats->id == $this->category_link) {?>selected<?php } ?> >
+                            <?php echo"$this->category---$dispsubcats->category";?></option> ";
+					<?php
+				}
+				
+			}else
+			{
+			
+		?>	<option value =  "<?php echo $this->id?>"<?php  if ( $this->id == $this->category_link) {?>selected<?php } ?> > <?php echo"$this->category" ?></option>
+		<?php
+			}
+		}
+?>				
+		
+		</select>
+		</td>
+	</tr>
+	<tr>
+		<td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td class="bodybold"><input type = "hidden" name = "Action" value ="<?php echo $_GET[Action]?>">
+				<input type = "hidden" name = "headline_id" value ="<?php echo $_GET[headline_id]?>">
+				<a href="JavaScript:check_for_entry(this.form)">update</a></td>
+	</tr>
+	</table>
+	</form>
+	<!-- define new headlines -->	
+<?php
+			
+	}
+	
+	function top_10_active_issues_table()
+	{
+		
+		//get all active issues
+		$select_clause = "id, category_id, issue, start_date";
+		$table = "issue";
+		$where_clause = "start_date > 0000-00-00 AND status = 'active' AND date_add(start_date, INTERVAL 3 month) > now() ";
+		$this->db->select_DB($table, $select_clause, $where_clause);
+		
+		
+//		$select_clause = "id, category_id, issue, sum(option_count_1 + option_count_2 + option_count_3 + option_count_4 + option_count_5 + option_count_6) as votes ";
+//		$where_clause = "start_date > 0000-00-00 group by id order by votes desc limit 10 ";
+//		$table = "issue";
+//		$this->db->select_DB($table, $select_clause, $where_clause);
+?>
+	<!-- gray bar -->
+	<table width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+	<tr>
+		<td class="bodybold">Top 10 Active Issues</td>
+		<td align="right" class="bodybold"><a href="javascript:Help('help/help_headline.html')">Help</a></td>
+	</tr>
+	</table>
+	<!-- gray bar -->
+	<br>
+	<!-- top 10 active issues -->
+	<table width="100%" border="0" cellspacing="0" cellpadding="0">
+	<tr>
+		<td width="200" class="bodybold">Category</td>
+		<td width="200" class="bodybold">Sub Category</td>
+		<td width="300" class="bodybold">Issue</td>
+		<td width="100" class="bodybold">No. Votes</td>
+	</tr>
+	<tr>
+		<td width="700" height="5" colspan="4"></td>
+	</tr>
+<?php
+	$dispcat = new AED();
+	$table2 = "issue_votes_sort_temp";
+	$where_clause2 ="1";
+	$dispcat->delete_DB($table2,  $where_clause2);
+	while ($row = $this->db->fetch_assoc())
+	{
+		extract ($row);
+		
+		$select1 = "category as subcat,parent_id";
+		$where1 = "id = $category_id ";
+		$dispcat->select_DB('category', $select1, $where1);	
+		extract($dispcat->fetch_assoc()	);
+		$select1 = "category ";
+		$where1 = "id = $parent_id ";	
+		$dispcat->select_DB('category', $select1, $where1);	
+		extract($dispcat->fetch_assoc()	);
+		$select1 = "count(*) as votes";
+		$where1 = "issue_id = $id";
+		$dispcat->select_DB('issue_votes', $select1, $where1);	
+		extract($dispcat->fetch_assoc()	);
+		//build sort table
+		
+		/*$category = mysqli_escape_string($category);
+		$subcat = mysqli_escape_string($subcat);
+		$issue = mysqli_escape_string($issue);*/
+		
+		$set_clause2 = "category = '$category', subcat = '$subcat', issue = '$issue', votes =$votes";
+		$dispcat->insert_DB($table2, $set_clause2);
+?>
+	
+	
+<?php
+	}
+	$select3 = "*";
+	$where_clause3 = "1 order by votes desc, category, subcat, issue limit 10";
+	$dispcat->select_DB($table2, $select3, $where_clause3);	
+	while ($row = $dispcat->fetch_assoc())
+		{
+		extract ($row);
+	
+?>	
+
+		<tr>
+			<td  class="bodytext"><?php echo $category?></td>
+			<td class="bodytext"><?php echo $subcat?></td>
+			<td  class="bodytext"><?php echo "$issue";?></td>
+			<td  class="bodytext"><?php echo $votes?></td>
+		</tr>
+<?php		
+		}
+?>
+		</table><br>
+		<!-- top 10 active issues -->
+<?php
+	}
+
+	function previously_defined_headlines_table()
+	{
+		$select_clause = "DATE_FORMAT(start_date,'%m/%d/%Y') as start_date , headline_title,headline_id";
+		$where_clause = "headline_id > 0";
+		$table = "headlines";
+		$this->db->select_DB($table, $select_clause, $where_clause);
+		
+		
+?>
+		<!-- gray bar -->
+	<table width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+	<tr>
+		<td class="bodybold">Previously Defined Trending Issues</td>
+	</tr>
+	</table>
+	<!-- gray bar -->
+	<br>
+	<!-- previously defined headlines -->
+	<table width="600" border="0" cellspacing="0" cellpadding="0">
+	<tr>
+		<td width="200" class="bodybold">Headline</td>
+		<td width="200" class="bodybold">Posting Date</td>
+		<td width="200">&nbsp;</td>
+	</tr>
+	<tr>
+		<td width="200" height="5" colspan="3"></td>
+	</tr>
+<SCRIPT LANGUAGE = "JavaScript">
+		//Java Script to confirm closing an account
+		function really(category){
+			return confirm("Are you sure that you want to DELETE this headline?");
+		}
+		</SCRIPT>	
+<?php
+	while ($result_row = $this->db->fetch_assoc()  )
+			{
+			
+				foreach($result_row as $i => $data) 
+				{
+					$$i = $data;
+					
+			
+			}
+			
+?>					
+					<tr>
+					<td width="300" class="bodytext"><?php echo $headline_title?></td>
+					<td width="200" class="bodytext"><?php echo $start_date?></td>
+					<td width="200" class="bodybold">| <a href="admin_headline_issues_view.php?headline_id=<?php echo $headline_id?>">view</a> | <a href="admin_headline_issues_edit.php?Action=modify&headline_id=<?php echo $headline_id?>">edit</a> | <a href="admin_headline_issues_ack.php?Action=delete&headline_id=<?php echo $headline_id?>" onClick ="return really()">delete</a> |</td>
+					</tr>
+<?php
+			}
+?>
+	
+	
+	</table>
+	<!-- previously defined headlines -->
+	<br>
+<?php
+		
+	}
+	
+	function content()
+	{
+		
+?>
+		
+		<!-- site content -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="50">&nbsp;</td>
+			<td width="90%" valign="top" class="bodytext">
+			<span class="subhead1">Trending Issues</span><br><br>
+<?php
+		$this->top_10_active_issues_table();
+		$this->previously_defined_headlines_table();
+?>
+		<!-- gray bar -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+		<tr>
+			<td class="bodybold">Define New Trending Issues</td>
+		</tr>
+		</table>
+		<!-- gray bar -->
+			<br>
+<?php
+		$this->headlines_table();
+	
+?>
+		
+			</td>
+			<td width="50">&nbsp;</td>
+		</tr>
+		</table>
+		
+<?php		//$this->java_date_popup();
+	}
+
+
+
+	function edit_content()
+	{
+		
+?>
+		
+		<!-- site content -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="50">&nbsp;</td>
+			<td width="90%" valign="top" class="bodytext">
+			<span class="subhead1">Headline Issues Edit</span><br><br>
+<?php
+		$select_clause = "DATE_FORMAT(start_date,'%m/%d/%Y') as start_date , 
+                    headline_id,headline_title,headline_content,headline_image, category_link";
+		$where_clause = "headline_id = $_GET[headline_id] ";
+		$table = "headlines";
+		$this->db->select_DB($table, $select_clause, $where_clause);
+		while ($result_row =& $this->db->fetch_assoc()  )
+			{
+			
+				foreach($result_row as $i => $data) 
+				{
+					$this->$i = $data;
+					
+				}			
+			}
+		?>	
+		<!-- gray bar -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+		<tr>
+			<td align="right" class="bodybold"><a href="javascript:Help('help/help_headline.html')">Help</a></td>
+		</tr>
+		</table>
+		<!-- gray bar -->
+		<?php
+		$this->headlines_table();
+	
+?>
+		
+			</td>
+			<td width="50">&nbsp;</td>
+		</tr>
+		</table>
+		
+<?php		//$this->java_date_popup();
+	}	
+
+	function view_content()
+	{
+		
+		$select_clause = "DATE_FORMAT(start_date,'%m/%d/%Y') as start_date , headline_id,headline_title,headline_content,headline_image, category_link";
+		$where_clause = "headline_id = $_GET[headline_id] ";
+		$table = "headlines";
+		$this->db->select_DB($table, $select_clause, $where_clause);
+		while ($result_row =& $this->db->fetch_assoc()  )
+			{
+			
+				foreach($result_row as $i => $data) 
+				{
+					$this->$i = $data;
+					
+				}			
+			}
+		?>
+		<!-- site content -->
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="50">&nbsp;</td>
+			<td width="90%" valign="top" class="bodytext">
+			<span class="subhead1">Headline Issues View</span><br><br>
+			<!-- gray bar -->
+			<table width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="#DFDFDF">
+			<tr>
+				<td align="right" class="bodybold">&nbsp;</td>
+			</tr>
+			</table>
+			<!-- gray bar -->
+			<br>
+			<!-- headline view table -->
+			<table width="100%" border="0" cellspacing="0" cellpadding="10">
+			<tr>
+				<td width="120" align="center" valign="top">
+                    <img src="images/<?php echo $this->headline_image?>" alt="" width="110" height="140" border="1"></td>
+				<td valign="top" class="bodytext">
+				<span class="bodybold"><?php echo $this->headline_title?></span><br>
+				<?php echo $this->headline_content?>.<br><br><a>more on this issue &raquo;&raquo;&raquo;</a>
+				</td>
+			</tr>
+			</table>
+			
+			<!-- headline view table -->
+			<br>
+			</td>
+			<td width="50">&nbsp;</td>
+		</tr>
+		</table>
+		<!-- site content -->
+<?php
+		
+	}
+	
+
+	function ack_content()
+	{
+            print_r($_POST);
+		$mysql_date = $this->calendar_to_date($_POST[start_date]);
+		$this->headline_title = mysql_escape_string($_POST[headline_title]);	
+		$this->headline_content = mysql_escape_string($_POST[headline_content]);	
+		$this->headline_image = mysql_escape_string($_POST[headline_image]);	
+		$this->category_link= mysql_escape_string($_POST[category_link]);		
+		if ($_POST[Action] == "modify")
+		{ //then update it  update_DB($table, $set_clause, $where_clause)
+			
+			if ($this->db->update_DB("headlines",  "start_date = '$mysql_date',  
+                            headline_title = '$this->headline_title', headline_content  = '$this->headline_content',  
+                            headline_image = '$this->headline_image',  category_link = $this->category_link  " , 
+                            " headline_id =  $_POST[headline_id] ") ) 
+			{
+				$this->manager_log_entry("Headline Issue $this->headline_title  updated");
+				//echo "<center>Headline Issue  successfully updated </center>";
+				header("Location:admin_headline_issues.php?HEADER_STATUS_MESSAGE=Headline Issue successfully updated ");
+			}
+		}
+		else if ($_GET[Action] == "delete")
+		{ //then delete it  
+			if ($this->db->delete_DB("headlines" , " headline_id =  $_GET[headline_id] ") ) 
+			{
+				$this->manager_log_entry("Headline Issue $_GET[headline_id] deleted");
+				//echo "<center>Headline Issue  successfully deleted</center>";
+				header("Location:admin_headline_issues.php?HEADER_STATUS_MESSAGE=Headline Issue  successfully deleted");
+			}
+		}
+		else //this is an original entry
+		{
+			if ($this->db->insert_DB("headlines", "start_date = '$mysql_date',  
+                            headline_title = '$_POST[headline_title]', headline_content  = '$_POST[headline_content]', 
+                            headline_image = '$_POST[headline_image]',  category_link = $_POST[category_link]  ") ) 
+			{
+				$this->manager_log_entry("Headline Issue $_POST[headline_title]  added");
+				//echo "<center>Headline Issue successfully entered</center>";
+				header("Location:admin_headline_issues.php?HEADER_STATUS_MESSAGE=Headline Issue successfully entered");
+			}
+		}	
+	}
+	
+}
